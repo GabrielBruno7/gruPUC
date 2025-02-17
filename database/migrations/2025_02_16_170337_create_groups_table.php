@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('groups', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->string('name')->nullable(false);
             $table->enum('course', ['ADS', 'Outros']);
             $table->uuid('owner_id');
             $table->foreign('owner_id')->references('id')->on('users')->onDelete('cascade');

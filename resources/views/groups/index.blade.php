@@ -1,37 +1,38 @@
-{{-- resources/views/layouts/app.blade.php --}}
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'gruPUC')</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
+@extends('layouts.app')
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{{ route('groups.index') }}">gruPUC</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('groups.index') }}">INDEEEEEEEEEEEEEEEXrfil</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('users.index') }}">Sair</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+@section('content')
+<div class="container">
+    <h1>Grupos Criados</h1>
 
-    <div class="container mt-4">
-        @yield('content')
-    </div>
+    <!-- Exibe uma mensagem caso não existam grupos -->
+    @if($groups->isEmpty())
+        <p>Não há grupos criados ainda.</p>
+    @else
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Curso</th>
+                    <th>Criador</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($groups as $group)
+                    <tr>
+                        <td>{{ $group->name }}</td>
+                        <td>{{ $group->course }}</td>
+                        <td>{{ $group->owner->name }}</td> <!-- Exibe o nome do criador -->
+                        <td>
+                            <!-- Adicione botões ou links para editar/exibir mais detalhes -->
+                            <a href="{{ route('groups.show', $group->id) }}" class="btn btn-info">Ver Detalhes</a>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <a href="{{ route('groups.create') }}" class="btn btn-primary">Criar Novo Grupo</a>
+</div>
+@endsection

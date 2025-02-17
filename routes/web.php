@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MembershipController;
@@ -26,5 +27,7 @@ Route::get('/memberships', [MembershipController::class, 'index'])->name('member
 Route::post('/memberships', [MembershipController::class, 'store'])->name('memberships.store');
 
 Auth::routes();
+
+
 
 Route::get('/home', [HomeController::class,  'index'])->name('home');
