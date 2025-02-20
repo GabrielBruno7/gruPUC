@@ -17,7 +17,6 @@ Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.c
 Route::get('/groups/{id}', [GroupController::class, 'show'])->name('groups.show');  // Rota correta para visualizar um grupo
 Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
 
-
 Route::get('/users', [UserController::class, 'index'])->name('users.index');
 Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');
 Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
@@ -27,7 +26,5 @@ Route::get('/memberships', [MembershipController::class, 'index'])->name('member
 Route::post('/memberships', [MembershipController::class, 'store'])->name('memberships.store');
 
 Auth::routes();
-
-
 
 Route::get('/home', [HomeController::class,  'index'])->name('home');

@@ -2,17 +2,18 @@
 
 @section('content')
 <div class="container">
-    <h1>Grupos Criados</h1>
+    <h1>Grupos Disponíveis</h1>
 
     <!-- Exibe uma mensagem caso não existam grupos -->
     @if($groups->isEmpty())
-        <p>Não há grupos criados ainda.</p>
+        <p>Não há grupos disponíveis.</p>
     @else
-        <table class="table">
-            <thead>
+        <table class="table table-striped">
+            <thead class="thead-dark">
                 <tr>
-                    <th>Nome</th>
+                    <th>Nome do grupo</th>
                     <th>Curso</th>
+                    <th>Período</th>
                     <th>Criador</th>
                     <th>Ações</th>
                 </tr>
@@ -21,11 +22,12 @@
                 @foreach($groups as $group)
                     <tr>
                         <td>{{ $group->name }}</td>
-                        <td>{{ $group->course }}</td>
-                        <td>{{ $group->owner->name }}</td> <!-- Exibe o nome do criador -->
+                        <td>{{ $group->course?->name ?? 'Sem curso' }}</td>
+                        <td>{{ $group->period . 'º período' }}</td>
+                        <td>{{ $group->owner?->name ?? 'Desconhecido' }}</td>
                         <td>
-                            <!-- Adicione botões ou links para editar/exibir mais detalhes -->
-                            <a href="{{ route('groups.show', $group->id) }}" class="btn btn-info">Ver Detalhes</a>
+                            <a href="{{ route('groups.show', $group->id) }}" class="btn btn-info btn-sm">Detalhes</a>
+                      
                         </td>
                     </tr>
                 @endforeach

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Domain\Group\GroupDomain;
-use Illuminate\Http\Request;
+use App\Models\Course;
+use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
@@ -24,7 +24,14 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $courses = GroupDomain::buildCourseSelect();
-        return view('groups.create', compact('courses'));
+        $user = Auth::user();
+        $course = Course::where('id', $user['course_id'])->first();
+
+        return view(
+            'groups.create', //sera que teria que trazer a lista e nao o cadastro? 
+            compact(
+                'user',
+                'course'
+        ));
     }
 }

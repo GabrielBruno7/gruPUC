@@ -12,15 +12,23 @@ class Group extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['id','name', 'course', 'owner_id'];
+    protected $fillable = ['id', 'name', 'course_id', 'owner_id', 'period'];
 
     protected $casts = [
         'id' => 'string',
+        'period' => 'integer',
         'name' => 'string',
-        'course' => 'string',
+        'course_id' => 'string',
+        'owner_id' => 'string',
     ];
 
-    // Definir o relacionamento com o usuário dono do grupo
+    // Relacionamento com o curso
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class, 'course_id');
+    }
+
+    // Relacionamento com o usuário dono do grupo
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
@@ -38,10 +46,10 @@ class Group extends Model
         parent::boot();
 
         static::creating(function ($group) {
-            // Gera um UUID se o campo id não estiver definido
             if (empty($group->id)) {
                 $group->id = (string) Str::uuid();
             }
         });
     }
 }
+

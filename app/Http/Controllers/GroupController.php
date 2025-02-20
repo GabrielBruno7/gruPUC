@@ -3,21 +3,33 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Group\GroupDomain;
+use App\Models\Course;
 use App\Models\Group;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class GroupController extends Controller
 {
     public function index()
     {
-        $groups = Group::all();
+        $groups = Group::with(['course', 'owner'])->get(); // Carregando os relacionamentos
+
         return view('groups.index', compact('groups'));
     }
+    
+    
 
     public function create()
     {
-        $courses = GroupDomain::buildCourseSelect();
-        return view('groups.create', compact('courses'));
+        $user = Auth::user();
+        $course = Course::where('id', $user['course_id'])->first();
+    
+        return view(
+            'groups.create', 
+            compact(
+                'user',
+                'course'
+        ));
     }
 
     public function show(Request $request)
@@ -25,12 +37,19 @@ class GroupController extends Controller
         return redirect()->route('groups.index');
     }
 
+
     public function store(Request $request)
     {
-        $data = $request->all();
-        $data['owner_id'] = auth()->user()->id;
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'course_id' => 'required|uuid|exists:courses,id',
+            'period' => 'required|integer',
+        ]);
 
-        $group = Group::create($data);
+        $validatedData['owner_id'] = Auth::id();
+    
+        $group = Group::create($validatedData);
+
         return redirect()->route('groups.index');
     }
 }

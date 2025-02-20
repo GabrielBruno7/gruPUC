@@ -14,25 +14,26 @@
                 @csrf
 
                 <div data-mdb-input-init class="form-outline mb-4">
-                    <label class="form-label" for="name">Nome</label>
+                    <label class="form-label" for="name">Nome do grupo</label>
                     <input type="text" id="name" name="name" class="form-control form-control-lg" required />
                 </div>
 
                 <div class="mb-4">
                     <label class="form-label" for="course">Curso</label>
-                    <select id="course" name="course" class="form-select form-control-lg" required>
-                        <option value="">Selecione um curso</option>
-                        @foreach ($courses as $key => $value)
-                            <option value="{{ $key }}">{{ $value }}</option>
-                        @endforeach
-                    </select>
+                    <input type="text" id="course" class="form-control form-control-lg" value="{{ $course->name }}" disabled />
+                    <input type="hidden" name="course_id" value="{{ $course->id }}">
                 </div>
 
+                <div class="mb-4">
+                    <label class="form-label" for="period">Período</label>
+                    <input type="text" id="period" class="form-control form-control-lg" value="{{ $user->period }}" disabled />
+                    <input type="hidden" name="period" value="{{ $user->period }}">
+                </div>
+                
                 <div class="d-flex justify-content-center">
-                  <button type="submit" class="btn btn-success btn-block btn-lg gradient-custom-4 text-body "> Criar grupo</button>
+                  <button type="submit" class="btn btn-success btn-block btn-lg gradient-custom-4 text-body ">Enviar</button>
                 </div>
               </form>
-
             </div>
           </div>
         </div>

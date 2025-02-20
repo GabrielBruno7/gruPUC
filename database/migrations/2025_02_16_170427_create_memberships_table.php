@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('memberships', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('user_id'); // Alterado para UUID
-            $table->uuid('group_id'); // Alterado para UUID
+            $table->uuid('user_id');
+            $table->uuid('group_id');
             $table->enum('status', ['pending', 'approved', 'reproved'])->nullable(true);
             $table->timestamps();
         

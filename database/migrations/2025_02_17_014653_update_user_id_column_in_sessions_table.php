@@ -6,20 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('sessions', function (Blueprint $table) {
-            $table->string('user_id', 36)->nullable()->change(); // Altera para varchar(36)
+            $table->string('user_id', 36)->nullable()->change();
         });
     }
 
     public function down(): void
     {
         Schema::table('sessions', function (Blueprint $table) {
-            $table->bigInteger('user_id')->nullable()->change(); // Volta para bigint se necessário
+            $table->bigInteger('user_id')->nullable()->change();
         });
     }
 };
