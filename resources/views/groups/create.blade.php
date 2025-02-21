@@ -29,10 +29,19 @@
                     <input type="text" id="period" class="form-control form-control-lg" value="{{ $user->period }}" disabled />
                     <input type="hidden" name="period" value="{{ $user->period }}">
                 </div>
+
+                <div class="mb-4">
+                    <label class="form-label" for="member">Integrante</label>
+                    <input type="text" id="member" class="form-control form-control-lg" value="{{ $user->name }}" disabled />
+                </div>
                 
                 <div class="d-flex justify-content-center">
                   <button type="submit" class="btn btn-success btn-block btn-lg gradient-custom-4 text-body ">Enviar</button>
                 </div>
+                
+                <!-- <div class="d-flex justify-content-center">
+                  <button type="submit" class="btn btn-success btn-block btn-lg gradient-custom-4 text-body ">Convidar ( em breve )</button>
+                </div> -->
               </form>
             </div>
           </div>

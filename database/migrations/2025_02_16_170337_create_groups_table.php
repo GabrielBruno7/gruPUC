@@ -12,9 +12,10 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('name')->nullable(false);
             $table->uuid('course_id');
-            $table->foreign('course_id')->references('id')->on('course')->onDelete('cascade');
+            $table->foreign('course_id')->references('id')->on('courses')->onDelete('cascade');
             $table->uuid('owner_id');
             $table->foreign('owner_id')->references('id')->on('users')->onDelete('cascade');
+            $table->integer('period');
             $table->timestamps();
         });
     }

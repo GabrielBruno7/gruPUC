@@ -2,18 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Group extends Model
 {
     use HasFactory;
-
-    protected $fillable = ['id', 'name', 'course_id', 'owner_id', 'period'];
-
+    use HasUuids;
+    protected $fillable = ['id', 'name', 'course_id', 'period', 'owner_id'];
+    protected $keyType = 'string';
+    public $incrementing = false;
     protected $casts = [
         'id' => 'string',
         'period' => 'integer',
@@ -22,25 +25,21 @@ class Group extends Model
         'owner_id' => 'string',
     ];
 
-    // Relacionamento com o curso
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class, 'course_id');
     }
 
-    // Relacionamento com o usuário dono do grupo
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
-    // Relacionamento com os membros do grupo
     public function memberships(): HasMany
     {
         return $this->hasMany(Membership::class);
     }
 
-    // Garante que o ID seja um UUID antes de salvar o grupo
     protected static function boot()
     {
         parent::boot();
@@ -50,6 +49,11 @@ class Group extends Model
                 $group->id = (string) Str::uuid();
             }
         });
+    }
+
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'user_group', 'group_id', 'user_id')->withTimestamps();
     }
 }
 
