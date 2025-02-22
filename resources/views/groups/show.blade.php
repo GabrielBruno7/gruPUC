@@ -49,11 +49,17 @@
             <hr>
 
             <h5 class="text-center">👨‍👩‍👧‍👦 Membros do Grupo</h5>
-            <ul class="list-group mx-auto w-75"> <!-- Centraliza a lista -->
+            <ul class="list-group mx-auto w-75">
                 @foreach ($group->users as $user)
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
+                            @if ($user->id === $group->owner_id)
+                                <span class="me-1">👑</span> <!-- Ícone da coroa -->
+                            @else
+                                <span class="me-1">👤</span> <!-- Ícone de pessoa normal -->
+                            @endif
                             {{ $user->name }} ({{ $user->email }})
+                            
                             @if ($user->pivot->status === 'pending')
                                 <span class="text-warning">(Pendente)</span>
                             @endif
@@ -76,6 +82,7 @@
                     </li>
                 @endforeach
             </ul>
+
 
             @if (Auth::id() !== $group->owner_id && !$group->users->contains(Auth::user()))
                 <form action="{{ route('groups.request.join', $group->id) }}" method="POST" class="mt-4">

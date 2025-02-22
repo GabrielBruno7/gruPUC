@@ -19,11 +19,21 @@ class GroupController extends Controller
 
     public function index()
     {
+        $user = Auth::user();
+
+        $course = Course::find($user['course_id']);
+
         $groups = Group::with(['course', 'owner'])
             ->where('status', 'ativo')
             ->whereNull('deleted_at')
-            ->get();
-    
+            ->where('course_id', $user['course_id'])
+            ->get()
+        ;
+
+        $groups = $groups->filter(function ($group) use ($user) {
+            return $user->period === $group->period;
+        });
+
         return view('groups.index', compact('groups'));
     }
 
@@ -35,7 +45,8 @@ class GroupController extends Controller
             ->where('owner_id', $user->id)
             ->where('status', 'ativo')
             ->whereNull('deleted_at')
-            ->exists();
+            ->exists()
+        ;
 
         if ($hasGroup) {
             return back()->withErrors(['error' => 'Não foi possível criar um novo grupo, você já possui um grupo ativo']);
@@ -100,7 +111,7 @@ class GroupController extends Controller
         ]);
 
         $group->users()->attach(Auth::id(), [
-            'uuid' => Uuid::uuid4()->toString(),
+            'id' => Uuid::uuid4()->toString(),
             'status' => 'approved',
         ]);
 

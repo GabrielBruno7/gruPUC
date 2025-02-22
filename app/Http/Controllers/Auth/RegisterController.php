@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Course;
+use Illuminate\Support\Facades\DB;
 
 class RegisterController extends Controller
 {
