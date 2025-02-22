@@ -2,6 +2,18 @@
 
 @section('content')
 <div class="container">
+    @if(session('error'))
+        <div class="alert alert-danger">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    <!-- Exibir mensagens de sucesso -->
+    @if(session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+    @endif
     <h1>Grupos Disponíveis</h1>
 
     <!-- Exibe uma mensagem caso não existam grupos -->
@@ -34,7 +46,6 @@
             </tbody>
         </table>
     @endif
-
     <a href="{{ route('groups.create') }}" class="btn btn-primary">Criar Novo Grupo</a>
 </div>
 @endsection

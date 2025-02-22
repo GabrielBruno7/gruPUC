@@ -8,12 +8,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('user_group', function (Blueprint $table) {
+            $table->uuid('uuid')->primary();
             $table->uuid('group_id');
             $table->uuid('user_id');
             $table->timestamps();
-
-            $table->primary(['group_id', 'user_id']);
-
+            $table->enum('status', ['pending', 'approved', 'reproved'])->nullable();
             $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });

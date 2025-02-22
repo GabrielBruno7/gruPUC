@@ -8,15 +8,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Group extends Model
 {
     use HasFactory;
     use HasUuids;
-    protected $fillable = ['id', 'name', 'course_id', 'period', 'owner_id'];
+    use SoftDeletes;
+
+    protected $fillable = ['name', 'course_id', 'owner_id', 'period', 'status'];
     protected $keyType = 'string';
+    protected $dates = ['deleted_at'];
     public $incrementing = false;
+
     protected $casts = [
         'id' => 'string',
         'period' => 'integer',
@@ -53,7 +58,9 @@ class Group extends Model
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'user_group', 'group_id', 'user_id')->withTimestamps();
+        return $this->belongsToMany(User::class, 'user_group')
+            ->withPivot('status', 'id')  // Incluindo tanto 'status' quanto 'id'
+            ->withTimestamps();
     }
 }
 
