@@ -36,7 +36,7 @@
         </a>
     </div>
 
-    @if($groups->isEmpty())
+    @if(!$groups)
         <p><i class="fas fa-info-circle me-2"></i> Não há grupos disponíveis.</p>
     @else
         <div class="mt-4">
@@ -54,9 +54,9 @@
                     @foreach($groups as $group)
                         <tr>
                             <td>{{ $group->name }}</td>
-                            <td>{{ $group->course?->name ?? 'Sem curso' }}</td>
+                            <td>{{ $group->course_name }}</td>
                             <td>{{ $group->period . 'º período' }}</td>
-                            <td>{{ $group->owner?->name ?? 'Desconhecido' }}</td>
+                            <td>{{ $group->owner_name ?? 'Desconhecido' }}</td>
                             <td>
                                 <a href="{{ route('groups.show', $group->id) }}" class="btn btn-info btn-sm">
                                     <i class="fas fa-eye me-1"></i> Detalhes

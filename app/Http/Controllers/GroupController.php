@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Course;
-use App\Models\Group;
 use App\Models\Invitation;
-use App\Models\User;
+use domain\course\Course;
+use domain\group\Group;
+use domain\user\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use infra\CourseDb;
+use infra\GroupDb;
+use infra\UserDb;
 use Ramsey\Uuid\Uuid;
 
 class GroupController extends Controller
@@ -21,26 +25,38 @@ class GroupController extends Controller
 
     public function index()
     {
+        try {
+            $authUser = Auth::user();
 
-        $user = Auth::user();
-        $course = Course::find($user['course_id']);
-    
-        $groups = Group::with(['course', 'owner'])
-            ->where('status', 'ativo')
-            ->whereNull('deleted_at')
-            ->where('course_id', $user['course_id'])
-            ->get();
+            $course = (new Course(new CourseDb()))
+                ->setId($authUser['course_id'])
+                ->loadById()
+            ;
 
-        $groups = $groups->filter(fn($group) => $user->period === $group->period);
+            $user = (new User(new UserDb()))
+                ->setId($authUser['id'])
+                ->setName($authUser['name'])
+                ->setRole($authUser['role'])
+                ->setEmail($authUser['email'])
+                ->setPeriod($authUser['period'])
+                ->setCourse($course)
+            ;
 
+            $groups = (new Group(new GroupDb()))
+                ->setUser($user)
+                ->loadAllGroups()
+            ;
 
-        $pendingInvitations = Invitation::with(['group', 'sender']) // <-- Carrega os relacionamentos
-            ->where('email', $user->email)
-            ->where('status', 'pending')
-            ->get()
-        ;
-    
-        return view('groups.index', compact('groups', 'pendingInvitations'));
+            $pendingInvitations = Invitation::with(['group', 'sender'])
+                ->where('email', $user->getEmail())
+                ->where('status', 'pending')
+                ->get()
+            ;
+
+            return view('groups.index', compact('groups', 'pendingInvitations'));
+        } catch (Exception $e) {
+            echo $e->getMessage();
+        }
     }
 
     public function create()
@@ -65,14 +81,28 @@ class GroupController extends Controller
 
     public function show(string $id)
     {
-        $group = Group::with('course', 'owner', 'users')->findOrFail($id);
+        try {
+            $authUser = Auth::user();
 
-        $pendingInvitations = Invitation::where('group_id', $group->id)
-            ->where('status', 'pending')
-            ->get()
-        ;
+            $user = (new User(new UserDb()))
+                ->setId($authUser['id'])
+                ->loadById()
+            ;
 
-        return view('groups.show', compact('group', 'pendingInvitations'));
+            $group = (new Group(new GroupDb()))
+                ->setUser($user)
+                ->loadGroupByUserId()
+            ;
+
+            $pendingInvitations = Invitation::where('group_id', $group->getId()) /// www???w
+                ->where('status', 'pending')
+                ->get()
+            ;
+    
+            return view('groups.show', compact('group', 'pendingInvitations'));
+        } catch (Exception $e) {
+            echo $e->getMessage();
+        }
     }
 
     public function destroy($id)

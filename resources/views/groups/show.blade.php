@@ -21,7 +21,7 @@
             <a href="{{ route('groups.index') }}" class="btn btn-secondary ms-2 position-absolute start-0">
                 ← Voltar
             </a>
-            <h3 class="m-0">{{ $group->name }}</h3>
+            <h3 class="m-0">{{ $group->getName() }}</h3>
         </div>
         <div class="card-body text-center">
         <h5 class="text-center">📝 Informações do Grupo</h5>
@@ -29,45 +29,45 @@
             <tbody>
                 <tr>
                     <th class="text-center">Nome</th>
-                    <td class="text-start">{{ $group->name }}</td>
+                    <td class="text-start">{{ $group->getName() }}</td>
                 </tr>
                 <tr>
                     <th class="text-center">Curso</th>
-                    <td class="text-start">{{ $group->course->name }}</td>
+                    <td class="text-start">{{ $group->getUser()->getCourse()->getName() }}</td>
                 </tr>
                 <tr>
                     <th class="text-center">Período</th>
-                    <td class="text-start">{{ $group->period . 'º' }}</td>
+                    <td class="text-start">{{ $group->getPeriod() . 'º' }}</td>
                 </tr>
                 <tr>
                     <th class="text-center">Administrador</th>
-                    <td class="text-start">{{ $group->owner->name }}</td>
+                    <td class="text-start">{{ $group->getOwnerUser()->getName() }}</td>
                 </tr>
                 <tr>
                     <th class="text-center">Data de Criação</th>
-                    <td class="text-start">{{ $group->created_at->format('d/m/Y') }}</td>
+                    <td class="text-start">{{ $group->getCreatedAt()->format('d/m/Y') }}</td>
                 </tr>
             </tbody>
         </table>
             <hr>
             <h5 class="text-center">👨‍👩‍👧‍👦 Membros do Grupo</h5>
             <ul class="list-group mx-auto w-75">
-                @foreach ($group->users as $user)
+                @foreach ($group->getTeammates() as $user)
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
-                            @if ($user->id === $group->owner_id)
-                                <span class="me-1">👑</span> <!-- Ícone da coroa -->
+                            @if ($user->id === $group->getOwnerUser()->getId())
+                                <span class="me-1">👑</span>
                             @else
-                                <span class="me-1">👤</span> <!-- Ícone de pessoa normal -->
+                                <span class="me-1">👤</span>
                             @endif
                             {{ $user->name }} ({{ $user->email }})
                             
-                            @if ($user->pivot->status === 'pending')
+                            @if ($user->status === 'pending')
                                 <span class="text-warning">(Pendente)</span>
                             @endif
                         </div>
-                        
-                        @if (Auth::id() === $group->owner_id && $user->pivot->status === 'pending')
+
+                        @if (Auth::id() === $group->getOwnerUser()->getId() && $user->status === 'pending')
                             <div>
                                 <form action="{{ route('groups.approve', [$group->id, $user->id]) }}" method="POST" class="d-inline">
                                     @csrf
@@ -83,7 +83,7 @@
                         @endif
                     </li>
                 @endforeach
-                @if (Auth::id() === $group->owner_id)
+                @if (Auth::id() === $group->getOwnerUser()->getId())
                     @foreach ($pendingInvitations as $invitation)
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
@@ -101,15 +101,14 @@
                 @endif
             </ul>
 
-            @if (Auth::id() !== $group->owner_id && !$group->users->contains(Auth::user()))
+            @if (Auth::id() !== $group->getOwnerUser()->getId() && !$group->users->contains(Auth::user()))
                 <form action="{{ route('groups.request.join', $group->id) }}" method="POST" class="mt-4">
                     @csrf
                     <button type="submit" class="btn btn-primary mx-auto">Pedir para Entrar</button>
                 </form>
             @endif
             
-            @if (Auth::id() === $group->owner_id)
-            <!-- Modal para inserir e-mail -->
+            @if (Auth::id() === $group->getOwnerUser()->getId())
             <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -117,7 +116,7 @@
                             <h5 class="modal-title" id="inviteModalLabel">Convidar Usuário para o Grupo</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form action="{{ route('groups.invite', $group->id) }}" method="POST">
+                        <form action="{{ route('groups.invite', $group->getId()) }}" method="POST">
                             @csrf
                             <div class="modal-body">
                                 <label for="email" class="form-label">E-mail do Usuário:</label>
@@ -133,13 +132,13 @@
             </div>
         @endif
 
-        @if (Auth::id() === $group->owner_id)
+        @if (Auth::id() === $group->getOwnerUser()->getId())
             <div class="d-flex justify-content-center gap-2 mt-4">
                 <button type="button" class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#inviteModal">
                     ➕ Convidar Usuário
                 </button>
 
-                <form action="{{ route('groups.destroy', $group->id) }}" method="POST">
+                <form action="{{ route('groups.destroy', $group->getId()) }}" method="POST">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-danger">✖ Deletar Grupo</button>
