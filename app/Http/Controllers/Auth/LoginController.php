@@ -52,7 +52,7 @@ class LoginController extends Controller
             return route('groups.show', $group->id);
         }
         // Caso contrário, redireciona para a criação de um novo grupo
-        return route('groups.create');
+        return route('groups.index');
     }
 
     /**

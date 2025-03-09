@@ -17,14 +17,16 @@ Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.c
 Route::get('/groups/{id}', [GroupController::class, 'show'])->name('groups.show');  // Rota correta para visualizar um grupo
 Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
 
-Route::get('/groups/{group}', [GroupController::class, 'show'])->name('groups.show');
 Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
-
-
+Route::post('/groups/cancel-invite', [GroupController::class, 'cancelInvite'])->name('groups.cancel.invite');
 Route::post('/groups/{group}/request-join', [GroupController::class, 'requestJoin'])->name('groups.request.join');
 Route::put('/groups/{group}/approve/{user}', [GroupController::class, 'approve'])->name('groups.approve');
 Route::put('/groups/{group}/reject/{user}', [GroupController::class, 'reject'])->name('groups.reject');
 
+Route::post('/invitations/{invitation}/accept', [GroupController::class, 'accept'])->name('invitations.accept');
+Route::post('/invitations/{invitation}/reject', [GroupController::class, 'rejectt'])->name('invitations.rejectt');
+
+Route::post('/groups/{group}/invite', [GroupController::class, 'invite'])->name('groups.invite');
 
 Route::get('/users', [UserController::class, 'index'])->name('users.index');
 Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');
