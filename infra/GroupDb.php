@@ -7,6 +7,8 @@ use domain\group\Group;
 use Illuminate\Support\Facades\DB;
 use domain\group\GroupPersistenceInterface;
 use domain\user\User;
+use Exception;
+use Ramsey\Uuid\Uuid;
 
 class GroupDb implements GroupPersistenceInterface
 {
@@ -31,6 +33,17 @@ class GroupDb implements GroupPersistenceInterface
         ;
     }
 
+    public function inviteTeammate(Group $group): void
+    {
+        DB::table('invitations')->insert([
+            'id' => $group->getId(),
+            'invited_by' => $group->getOwnerUser()->getId(),
+            'email' => $group->getPeriod(),
+            'status' => 'pending',
+            'created_at' => $group->getCreatedAt(),
+        ]);
+    }
+
     public function loadGroupByUserId(Group $group): bool
     {
         $result = DB::table('user_group as ug')
@@ -41,7 +54,6 @@ class GroupDb implements GroupPersistenceInterface
                 'g.owner_id',
                 'g.created_at'
             )
-
             ->leftJoin('groups as g', 'ug.group_id', '=', 'g.id')
             ->leftJoin('users as u', 'g.owner_id', '=', 'u.id')
             ->leftJoin('courses as c', 'g.course_id', '=', 'c.id')
@@ -89,5 +101,38 @@ class GroupDb implements GroupPersistenceInterface
             ->get()
             ->toArray()
         ;
+    }
+
+    public function create(Group $group): Group
+    {
+        DB::transaction(function () use ($group) {
+            $affectedRow1 = DB::table('groups')->insert([
+                'id' => $group->getId(),
+                'name' => $group->getName(),
+                'period' => $group->getPeriod(),
+                'status' => Group::GROUP_STATUS_ACTIVE,
+                'created_at' => $group->getCreatedAt(),
+                'owner_id' => $group->getOwnerUser()->getId(),
+                'course_id' => $group->getOwnerUser()->getCourse()->getId(),
+            ]);
+
+            if (!$affectedRow1) {
+                throw new Exception('Houve um erro na criação do grupo');
+            }
+
+            $affectedRow2 = DB::table('user_group')->insert([
+                'created_at' => now(),
+                'group_id' => $group->getId(),
+                'id' => Uuid::uuid4()->toString(),
+                'status' => User::USER_STATUS_APPROVED,
+                'user_id' => $group->getOwnerUser()->getId(),
+            ]);
+
+            if (!$affectedRow2) {
+                throw new Exception('Houve um erro na criação do vinculo do grupo com o usuário');
+            }
+        });
+
+        return $group;
     }
 }

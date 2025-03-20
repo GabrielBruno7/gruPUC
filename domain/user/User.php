@@ -5,6 +5,7 @@ namespace domain\user;
 use domain\course\Course;
 use domain\group\Group;
 use Exception;
+use Illuminate\Validation\ValidationException;
 
 class User
 {
@@ -17,7 +18,11 @@ class User
     private Course $course;
     private ?UserPersistenceInterface $persistence = null;
 
-    public function __construct(UserPersistenceInterface $persistence)
+    public const USER_STATUS_ACTIVE = 'ativo';
+
+    public const USER_STATUS_APPROVED = 'approved';
+
+    public function __construct(?UserPersistenceInterface $persistence = null)
     {
         $this->persistence = $persistence;
     }
@@ -118,6 +123,24 @@ class User
         }
 
         return $this;
+    }
+
+    public function loadByEmail(): User
+    {
+        if (!$this->getPersistence()->loadByEmail($this)) {
+            throw new Exception("Usuário não encontrado.");
+        }
+
+        return $this;
+    }
+
+    public function checkIfUserGroupFounder(): void
+    {
+        if ($this->getPersistence()->isUserGroupFounder($this)) {
+            throw ValidationException::withMessages([
+                'error' => 'Não foi possível criar um novo grupo, você já possui um grupo ativo',
+            ]);
+        }
     }
 }
 

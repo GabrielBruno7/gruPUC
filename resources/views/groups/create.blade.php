@@ -23,23 +23,23 @@
                         <label for="course" class="form-label">
                             <i class="fas fa-book me-2"></i> {{ __('Curso') }}
                         </label>
-                        <input type="text" id="course" class="form-control" value="{{ $course->name }}" disabled />
-                        <input type="hidden" name="course_id" value="{{ $course->id }}">
+                        <input type="text" id="course" class="form-control" value="{{ $user->getCourse()->getName() }}" disabled />
+                        <input type="hidden" name="course_id" value="{{ $user->getCourse()->getId() }}">
                     </div>
 
                     <div class="mb-3">
                         <label for="period" class="form-label">
                             <i class="far fa-calendar-alt me-2"></i> {{ __('Período') }}
                         </label>
-                        <input type="text" id="period" class="form-control" value="{{ $user->period }}º" disabled />
-                        <input type="hidden" name="period" value="{{ $user->period }}">
+                        <input type="text" id="period" class="form-control" value="{{ $user->getPeriod() }}º" disabled />
+                        <input type="hidden" name="period" value="{{ $user->getPeriod()}}">
                     </div>
 
                     <div class="mb-3">
                         <label for="member" class="form-label">
                             <i class="fas fa-user me-2"></i> {{ __('Integrante') }}
                         </label>
-                        <input type="text" id="member" class="form-control" value="{{ $user->name }}" disabled />
+                        <input type="text" id="member" class="form-control" value="{{ $user->getName() }}" disabled />
                     </div>
 
                     <div id="members-list"></div>

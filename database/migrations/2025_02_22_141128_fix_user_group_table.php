@@ -7,7 +7,7 @@ return new class extends Migration {
     public function up()
     {
         Schema::create('invitations', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->uuid('group_id');
             $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
             $table->uuid('invited_by');

@@ -4,6 +4,8 @@ namespace domain\group;
 
 use domain\user\User;
 use Exception;
+use Illuminate\Validation\ValidationException;
+use Ramsey\Uuid\Uuid;
 
 class Group
 {
@@ -12,9 +14,11 @@ class Group
     private int $period;
     private string $name;
     private User $ownerUser;
-    private array $teammates;
+    private ?array $teammates;
     private \DateTime $createdAt;
     private ?GroupPersistenceInterface $persistence = null;
+
+    public const GROUP_STATUS_ACTIVE = 'ativo';
 
     public function __construct(GroupPersistenceInterface $persistence)
     {
@@ -98,14 +102,14 @@ class Group
         return $this->createdAt;
     }
 
-    public function setTeammates(array $teammates): self
+    public function setTeammates(?array $teammates): self
     {
         $this->teammates = $teammates;
 
         return $this;
     }
 
-    public function getTeammates(): array
+    public function getTeammates(): ?array
     {
         return $this->teammates;
     }
@@ -124,5 +128,14 @@ class Group
         return $this;
     }
 
+    public function create(): self
+    {
+        $this
+            ->setId(Uuid::uuid4()->toString())
+            ->setCreatedAt(now())
+        ;
+
+        return $this->getPersistence()->create($this);
+    }
 }
 

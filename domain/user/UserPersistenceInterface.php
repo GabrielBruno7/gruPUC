@@ -8,4 +8,6 @@ interface UserPersistenceInterface
 {
     public function load(User $user): User;
     public function loadById(User $user): bool;
+    public function loadByEmail(User $user): bool;
+    public function isUserGroupFounder(User $user): bool;
 }

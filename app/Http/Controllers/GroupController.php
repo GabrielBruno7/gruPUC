@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Invitation;
-use domain\course\Course;
-use domain\group\Group;
-use domain\user\User;
 use Exception;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
-use infra\CourseDb;
-use infra\GroupDb;
 use infra\UserDb;
+use infra\GroupDb;
+use infra\CourseDb;
 use Ramsey\Uuid\Uuid;
+use domain\user\User;
+use domain\group\Group;
+use domain\course\Course;
+use App\Models\Invitation;
+use domain\invite\Invite;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use infra\InviteDb;
 
 class GroupController extends Controller
 {
@@ -61,22 +62,20 @@ class GroupController extends Controller
 
     public function create()
     {
-        $user = Auth::user();
-        
-        $hasGroup = DB::table('groups')
-            ->where('owner_id', $user->id)
-            ->where('status', 'ativo')
-            ->whereNull('deleted_at')
-            ->exists()
-        ;
+        try {
+            $authUser = Auth::user();
 
-        if ($hasGroup) {
-            return back()->withErrors(['error' => 'Não foi possível criar um novo grupo, você já possui um grupo ativo']);
+            $user = (new User(new UserDb()))
+                ->setId($authUser['id'])
+                ->loadById()
+            ;
+
+            $user->checkIfUserGroupFounder();
+
+            return view('groups.create', compact('user'));
+        } catch (Exception $e) {
+            echo $e->getMessage();
         }
-
-        $course = Course::where('id', $user['course_id'])->first();
-
-        return view('groups.create', compact('user', 'course'));
     }
 
     public function show(string $id)
@@ -94,7 +93,7 @@ class GroupController extends Controller
                 ->loadGroupByUserId()
             ;
 
-            $pendingInvitations = Invitation::where('group_id', $group->getId()) /// www???w
+            $pendingInvitations = Invitation::where('group_id', $group->getId())
                 ->where('status', 'pending')
                 ->get()
             ;
@@ -140,48 +139,38 @@ class GroupController extends Controller
 
     public function store(Request $request)
     {
-        $groupData = $request->validate([
-            'name' => 'required|string|max:255',
-            'course_id' => 'required|uuid|exists:courses,id',
-            'period' => 'required|integer',
-            'members' => 'nullable|array',
-            'members.*' => 'email|distinct',
-        ]);
+        try {
+            $groupData = $request->validate([
+                'name' => 'required|string|max:255',
+                'course_id' => 'required|uuid|exists:courses,id',
+                'period' => 'required|integer',
+                'members' => 'nullable|array',
+                'members.*' => 'email|distinct',
+            ]);
 
-        $group = Group::create([
-            'owner_id' => Auth::id(),
-            'name' => $groupData['name'],
-            'period' => $groupData['period'],
-            'course_id' => $groupData['course_id'],
-        ]);
-    
-        $group->users()->attach(Auth::id(), [
-            'id' => Uuid::uuid4()->toString(),
-            'status' => 'approved',
-        ]);
-    
+            $owner = (new User(new UserDb()))
+                ->setId(Auth::id())
+                ->loadById()
+            ;
 
-        if (!empty($groupData['members'])) {
-            foreach ($groupData['members'] as $email) {
+            $group = (new Group(new GroupDb()))
+                ->setUser(new User(new UserDb()))
+                ->setOwnerUser($owner)
+                ->setName($groupData['name'])
+                ->setPeriod($groupData['period'])
+                ->setTeammates($groupData['members'] ?? null)
+                ->create()
+            ;
 
-                $user = User::where('email', $email)->first();
+            (new Invite(new InviteDb()))
+                ->setGroup($group)
+                ->inviteTeammates()
+            ;
 
-                if (!$user) {
-                    throw ValidationException::withMessages([
-                        'members' => "O usuário com o email $email não foi encontrado.",
-                    ]);
-                }
-        
-                Invitation::create([
-                    'group_id' => $group->id,
-                    'invited_by' => Auth::id(),
-                    'email' => $email,
-                    'status' => 'pending',
-                ]);
-            }
+            return redirect()->route('groups.show', $group->getId())->with('success', 'Novo grupo criado com sucesso!');
+        } catch (Exception $e) {
+            return redirect()->route('groups.index')->with('error', $e->getMessage());
         }
-
-        return redirect()->route('groups.show', $group->id)->with('success', 'Novo grupo criado com sucesso!');
     }
 
     public function requestJoin($groupId)
