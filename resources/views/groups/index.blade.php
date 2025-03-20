@@ -87,11 +87,11 @@
                         @foreach($pendingInvitations as $invitation)
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    <strong>{{ $invitation->group->name }}</strong><br>
-                                    <small>Enviado por: {{ $invitation->sender->name }}</small>
+                                    <strong>{{ $invitation->group_name }}</strong><br>
+                                    <small>Enviado por: {{ $invitation->sender_name }}</small>
                                 </div>
                                 <div>
-                                    <form action="{{ route('invitations.accept', $invitation->id) }}" method="POST" class="d-inline">
+                                    <form action="{{ route('invite.acceptInvite', $invitation->id) }}" method="POST" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-success btn-sm">
                                             <i class="fas fa-check"></i> Aceitar

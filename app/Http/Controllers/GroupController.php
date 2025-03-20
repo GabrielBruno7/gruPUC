@@ -48,10 +48,9 @@ class GroupController extends Controller
                 ->loadAllGroups()
             ;
 
-            $pendingInvitations = Invitation::with(['group', 'sender'])
-                ->where('email', $user->getEmail())
-                ->where('status', 'pending')
-                ->get()
+            $pendingInvitations = (new Invite(new InviteDb()))
+                ->setRecipient($user)
+                ->loadPendingInvitesByRecipientEmail()
             ;
 
             return view('groups.index', compact('groups', 'pendingInvitations'));
@@ -89,15 +88,16 @@ class GroupController extends Controller
             ;
 
             $group = (new Group(new GroupDb()))
+                ->setId($id)
                 ->setUser($user)
-                ->loadGroupByUserId()
+                ->loadGroupById()
             ;
 
             $pendingInvitations = Invitation::where('group_id', $group->getId())
                 ->where('status', 'pending')
                 ->get()
             ;
-    
+
             return view('groups.show', compact('group', 'pendingInvitations'));
         } catch (Exception $e) {
             echo $e->getMessage();
@@ -173,80 +173,51 @@ class GroupController extends Controller
         }
     }
 
-    public function requestJoin($groupId)
+    public function approveRequest(string $groupId, string $userId)
     {
-        $group = Group::findOrFail($groupId);
-    
-        $group->users()->attach(Auth::id(), [
-            'id' => Uuid::uuid4()->toString(),
-            'status' => 'pending'
-        ]);
-    
-        return redirect()->route('groups.show', $groupId)->with('success', 'Solicitação enviada para o administrador do grupo.');
-    }
-
-    public function approve($groupId, $userId)
-    {
-        $group = Group::findOrFail($groupId);
-        $user = User::findOrFail($userId);
-
-        if (Auth::id() === $group->owner_id) {
-            $group->users()->updateExistingPivot($user->id, ['status' => 'approved']);
-            return redirect()->route('groups.show', $groupId)->with('success', 'Membro aprovado com sucesso!');
-        }
-
-        return redirect()->route('groups.show', $groupId)->with('error', 'Você não tem permissão para aprovar membros.');
-    }
-
-    public function reject($groupId, $userId)
-    {
-        $group = Group::findOrFail($groupId);
-        $user = User::findOrFail($userId);
-
-        if (Auth::id() === $group->owner_id) {
-            $group->users()->detach($user->id);
-            return redirect()->route('groups.show', $groupId)->with('success', 'Membro rejeitado e removido do grupo.');
-        }
-
-        return redirect()->route('groups.show', $groupId)->with('error', 'Você não tem permissão para rejeitar membros.');
-    }
-
-    public function accept($id)
-    {
-        $invitation = Invitation::findOrFail($id);
-        $user = Auth::user();
-    
-        if ($invitation->email !== $user->email) {
-            return redirect()->route('groups.index')->with('error', 'Convite inválido.');
-        }
-    
-        DB::beginTransaction();
         try {
-            // Adiciona o usuário ao grupo com status "approved"
-            DB::table('user_group')->insert([
-                'id'         => Uuid::uuid4()->toString(),
-                'group_id'   => $invitation->group_id,
-                'user_id'    => $user->id,
-                'status'     => 'approved',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-    
-            // Rejeita todos os outros convites pendentes do usuário
-            Invitation::where('email', $user->email)
-                ->where('status', 'pending')
-                ->where('id', '!=', $invitation->id) // Exclui o convite que está sendo aceito
-                ->update(['status' => 'rejected'])
+            $user = (new User(new UserDb()))
+                ->setId($userId)
+                ->loadById()
             ;
-    
-            // Remove o convite aceito
-            $invitation->delete();
-    
-            DB::commit();
-            return redirect()->route('groups.index')->with('success', 'Convite aceito com sucesso!');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->route('groups.index')->with('error', 'Erro ao aceitar convite.');
+
+            $group = (new Group(new GroupDb()))
+                ->setId($groupId)
+                ->loadGroupById()
+            ;
+
+            $group
+                ->setUser($user)
+                ->approveRequest()
+            ;
+
+            return redirect()->route('groups.show', $groupId)->with('success', 'Membro aprovado com sucesso!');
+        } catch (Exception $e) {
+            return redirect()->route('groups.index')->with('error', "Ocorreu um erro, entre em contato com o suporte.");
+        }
+    }
+
+    public function rejectRequest(string $groupId, string $userId)
+    {
+        try {
+            $user = (new User(new UserDb()))
+                ->setId($userId)
+                ->loadById()
+            ;
+
+            $group = (new Group(new GroupDb()))
+                ->setId($groupId)
+                ->loadGroupById()
+            ;
+
+            $group
+                ->setUser($user)
+                ->rejectRequest()
+            ;
+
+            return redirect()->route('groups.show', $groupId)->with('success', 'Membro rejeitado com sucesso!');
+        } catch (Exception $e) {
+            return redirect()->route('groups.index')->with('error', $e->getMessage());
         }
     }
 
@@ -264,47 +235,44 @@ class GroupController extends Controller
         return redirect()->route('groups.index')->with('success', 'Convite recusado com sucesso!');
     }
 
-    public function invite(Request $request, $groupId)
+    public function inviteTeammate(Request $request, string $groupId)
     {
-        $user = Auth::user();
-        
-        $isUser = User::where('email', $request->email)
-            ->first()
-        ;
+        try {
+            if (!$request->email) {
+                return redirect()->back()->with('error', 'Nenhum e-mail enviado');
+            }
 
-        if (!$isUser) {
-            return redirect()->back()->with('error', 'Nenhum usúario encontrado com este endereço de e-mail');
+            $user = (new User(new UserDb()))
+                ->setEmail($request->email)
+                ->loadByEmail()
+            ;
+
+            if (!$user) {
+                return redirect()->back()->with('error',
+                 'Nenhum usuário encontrado com este endereço de e-mail'
+                );
+            }
+
+            $group = (new Group(new GroupDb()))
+                ->setId($groupId)
+                ->loadGroupById()
+            ;
+
+            $group->checkIfUserIsGroupOwnerToSendInvite(Auth::id());
+            $group->setUser($user)->checkIfUserAlreadyInGroup();
+
+            $invite = (new Invite(new InviteDb()))
+                ->setGroup($group)
+                ->setRecipient($user)
+                ->checkIfUserHasPendingInvite()
+            ;
+
+            $invite->invite();
+
+            return redirect()->back()->with('success', 'Convite enviado com sucesso!');
+        } catch (Exception $e) {
+            return redirect()->route('groups.index')->with('error', "Ocorreu um erro, entre em contato com o suporte.");
         }
-
-        $group = Group::findOrFail($groupId);
-
-        if (Auth::id() !== $group->owner_id) {
-            return redirect()->back()->with('error', 'Apenas o administrador pode enviar convites.');
-        }
-
-        $isPendingInvite = Invitation::where('email', $request->email)
-            ->where('status', 'pending')
-            ->where('invited_by', $user->id)
-            ->where('group_id', $group->id)
-            ->first()
-        ;
-
-        if ($isPendingInvite) {
-            return redirect()->back()->with('error', 'Já existe um convite pendente para este usuário.');
-        }
-
-        if ($group->users()->where('email', $request->email)->exists()) {
-            return redirect()->back()->with('error', 'Usuário já faz parte do grupo.');
-        }
-
-        Invitation::create([
-            'email' => $request->email,
-            'invited_by' => $user->id,
-            'group_id' => $groupId,
-            'status' => 'pending',
-        ]);
-
-        return redirect()->back()->with('success', 'Convite enviado com sucesso!');
     }
 
     public function cancelInvite(Request $request)

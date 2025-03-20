@@ -19,6 +19,7 @@ class Group
     private ?GroupPersistenceInterface $persistence = null;
 
     public const GROUP_STATUS_ACTIVE = 'ativo';
+    public const GROUP_STATUS_PENDING = 'pending';
 
     public function __construct(GroupPersistenceInterface $persistence)
     {
@@ -119,6 +120,15 @@ class Group
         return $this->getPersistence()->loadAllGroups($this);
     }
 
+    public function loadGroupById(): Group
+    {
+        if (!$this->getPersistence()->loadGroupById($this)) {
+            throw new Exception("Grupo não encontrado");
+        }
+
+        return $this;
+    }
+
     public function loadGroupByUserId(): Group
     {
         if (!$this->getPersistence()->loadGroupByUserId($this)) {
@@ -136,6 +146,37 @@ class Group
         ;
 
         return $this->getPersistence()->create($this);
+    }
+
+    public function insertPendingTeammate(): self
+    {
+        $this->setCreatedAt(now());
+
+        return $this->getPersistence()->insertPendingTeammate($this);
+    }
+
+    public function approveRequest(): void
+    {
+        $this->getPersistence()->approveRequest($this);
+    }
+
+    public function rejectRequest(): void
+    {
+        $this->getPersistence()->rejectRequest($this);
+    }
+
+    public function checkIfUserIsGroupOwnerToSendInvite(string $id): void
+    {
+        if ($this->getOwnerUser()->getId() !== $id) {
+            throw new Exception("Apenas o administrador pode enviar convites.");
+        }
+    }
+
+    public function checkIfUserAlreadyInGroup(): void
+    {
+        if ($this->getPersistence()->isUserAlreadyInGroup($this)) {
+            throw new Exception("Usuário já faz parte do grupo");
+        }
     }
 }
 

@@ -5,6 +5,7 @@ namespace domain\invite;
 use domain\user\User;
 use domain\group\Group;
 use domain\helper\Helper;
+use Exception;
 use Illuminate\Validation\ValidationException;
 
 class Invite
@@ -132,5 +133,31 @@ class Invite
             }
         }
     }
-}
 
+    public function loadPendingInvitesByRecipientEmail()
+    {
+        return $this->getPersistence()->loadPendingInvitesByRecipientEmail($this);
+    }
+
+    public function invite(): void
+    {
+        $this
+            ->setCreatedAt(now())
+            ->setId(Helper::uuid())
+            ->setStatus(self::INVITE_STATUS_PENDING)
+            ->setSender($this->getGroup()->getOwnerUser())
+            ->setRecipient($this->getGroup()->getUser())
+        ;
+
+        $this->getPersistence()->inviteTeammate($this);
+    }
+
+    public function checkIfUserHasPendingInvite(): self
+    {
+        if ($this->getPersistence()->hasPendingInvite($this)) {
+            throw new Exception('Já existe um convite pendente para este usuário.');
+        }
+
+        return $this;
+    }
+}

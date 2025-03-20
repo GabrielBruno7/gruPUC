@@ -69,12 +69,12 @@
 
                         @if (Auth::id() === $group->getOwnerUser()->getId() && $user->status === 'pending')
                             <div>
-                                <form action="{{ route('groups.approve', [$group->id, $user->id]) }}" method="POST" class="d-inline">
+                                <form action="{{route('groups.approveRequest', [$group->getId(), $user->id])}}" method="POST" class="d-inline">
                                     @csrf
                                     @method('PUT')
                                     <button type="submit" class="btn btn-success btn-sm">✔</button>
                                 </form>
-                                <form action="{{ route('groups.reject', [$group->id, $user->id]) }}" method="POST" class="d-inline">
+                                <form action="{{route('groups.rejectRequest', [$group->getId(), $user->id])}}" method="POST" class="d-inline">
                                     @csrf
                                     @method('PUT')
                                     <button type="submit" class="btn btn-danger btn-sm">✖</button>
@@ -101,8 +101,8 @@
                 @endif
             </ul>
 
-            @if (Auth::id() !== $group->getOwnerUser()->getId() && !$group->users->contains(Auth::user()))
-                <form action="{{ route('groups.request.join', $group->id) }}" method="POST" class="mt-4">
+            @if (Auth::id() !== $group->getOwnerUser()->getId() && !collect($group->getTeammates())->contains('id', Auth::id()))
+                <form action="{{ route('invite.requestJoin', $group->getId()) }}" method="POST" class="mt-4">
                     @csrf
                     <button type="submit" class="btn btn-primary mx-auto">Pedir para Entrar</button>
                 </form>
@@ -116,7 +116,7 @@
                             <h5 class="modal-title" id="inviteModalLabel">Convidar Usuário para o Grupo</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form action="{{ route('groups.invite', $group->getId()) }}" method="POST">
+                        <form action="{{ route('groups.inviteTeammate', $group->getId()) }}" method="POST">
                             @csrf
                             <div class="modal-body">
                                 <label for="email" class="form-label">E-mail do Usuário:</label>

@@ -2,13 +2,13 @@
 
 namespace infra;
 
-use domain\course\Course;
+use Exception;
+use Ramsey\Uuid\Uuid;
+use domain\user\User;
 use domain\group\Group;
 use Illuminate\Support\Facades\DB;
 use domain\group\GroupPersistenceInterface;
-use domain\user\User;
-use Exception;
-use Ramsey\Uuid\Uuid;
+use domain\helper\Helper;
 
 class GroupDb implements GroupPersistenceInterface
 {
@@ -25,23 +25,12 @@ class GroupDb implements GroupPersistenceInterface
             ->leftJoin('courses as c', 'g.course_id', '=', 'c.id')
             ->leftJoin('users as u', 'g.owner_id', '=', 'u.id')
             ->whereNull('g.deleted_at')
-            ->where('g.status', 'ativo')
+            ->where('g.status', Group::GROUP_STATUS_ACTIVE)
             ->where('g.period', $group->getUser()->getPeriod())
             ->where('g.course_id', $group->getUser()->getCourse()->getId())
             ->get()
             ->toArray()
         ;
-    }
-
-    public function inviteTeammate(Group $group): void
-    {
-        DB::table('invitations')->insert([
-            'id' => $group->getId(),
-            'invited_by' => $group->getOwnerUser()->getId(),
-            'email' => $group->getPeriod(),
-            'status' => 'pending',
-            'created_at' => $group->getCreatedAt(),
-        ]);
     }
 
     public function loadGroupByUserId(Group $group): bool
@@ -65,7 +54,46 @@ class GroupDb implements GroupPersistenceInterface
             return false;
         }
 
+        $ownerUser = (new User(new UserDb()))
+            ->setId($result->owner_id)
+            ->loadById()
+        ;
 
+        $group
+            ->setId($result->id)
+            ->setName($result->name)
+            ->setPeriod($result->period)
+            ->setOwnerUser($ownerUser)
+            ->setCreatedAt((new \DateTime($result->created_at)))
+        ;
+
+        $teammates = $this->loadUsersByGroupId($group);
+
+        $group->setTeammates($teammates);
+
+        return true;
+    }
+
+    public function loadGroupById(Group $group): bool
+    {
+        $result = DB::table('user_group as ug')
+            ->select(
+                'g.id',
+                'g.name',
+                'g.period',
+                'g.owner_id',
+                'g.created_at'
+            )
+            ->leftJoin('groups as g', 'ug.group_id', '=', 'g.id')
+            ->leftJoin('users as u', 'g.owner_id', '=', 'u.id')
+            ->leftJoin('courses as c', 'g.course_id', '=', 'c.id')
+            ->where('g.id', $group->getId())
+            ->first()
+        ;
+
+        if (!$result) {
+            return false;
+        }
 
         $ownerUser = (new User(new UserDb()))
             ->setId($result->owner_id)
@@ -98,8 +126,20 @@ class GroupDb implements GroupPersistenceInterface
             )
             ->leftJoin('users as u', 'ug.user_id', '=', 'u.id')
             ->where('ug.group_id', $group->getId())
+            ->where('ug.status', User::USER_STATUS_APPROVED)
             ->get()
             ->toArray()
+        ;
+    }
+
+    public function isUserAlreadyInGroup(Group $group): bool
+    {
+        return DB::table('user_group as ug')
+            ->leftJoin('users as u', 'ug.user_id', '=', 'u.id')
+            ->where('ug.group_id', $group->getId())
+            ->where('ug.user_id', $group->getUser()->getId())
+            ->where('ug.status', User::USER_STATUS_APPROVED)
+            ->exists()
         ;
     }
 
@@ -134,5 +174,51 @@ class GroupDb implements GroupPersistenceInterface
         });
 
         return $group;
+    }
+
+    public function insertPendingTeammate(Group $group): Group
+    {
+        DB::transaction(function () use ($group) {
+            $affectedRow = DB::table('user_group')->insert([
+                'group_id' => $group->getId(),
+                'id' => Helper::uuid(),
+                'created_at' => $group->getCreatedAt(),
+                'user_id' => $group->getUser()->getId(),
+                'status' => Group::GROUP_STATUS_PENDING,
+            ]);
+
+            if (!$affectedRow) {
+                throw new Exception('Houve um erro na criação do vinculo do grupo com o usuário');
+            }
+        });
+
+        return $group;
+    }
+
+    public function approveRequest(Group $group): void
+    {
+        $affectedRow = DB::table('user_group')
+            ->where('group_id', $group->getId())
+            ->where('user_id', $group->getUser()->getId())
+            ->where('status', 'pending')
+            ->update(['status' => User::USER_STATUS_APPROVED])
+        ;
+
+        if (!$affectedRow) {
+            throw new Exception('Houve um erro na aprovação do usuário');
+        }
+    }
+
+    public function rejectRequest(Group $group): void
+    {
+        $affectedRow = DB::table('user_group')
+            ->where('group_id', $group->getId())
+            ->where('user_id', $group->getUser()->getId())
+            ->update(['status' => User::USER_STATUS_REPROVED])
+        ;
+
+        if (!$affectedRow) {
+            throw new Exception('Houve um erro na rejeição do usuário');
+        }
     }
 }

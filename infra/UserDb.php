@@ -58,6 +58,7 @@ class UserDb implements UserPersistenceInterface
         ;
 
         $user
+            ->setId($result->id)
             ->setName($result->name)
             ->setEmail($result->email)
             ->setRole($result->role)
