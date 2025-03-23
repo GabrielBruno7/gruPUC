@@ -54,7 +54,9 @@ class GroupController extends Controller
                 ->loadPendingInvitesByRecipientEmail()
             ;
 
-            return view('groups.index', compact('groups', 'pendingInvitations'));
+            $userHasGroup = $user->isUserAlreadyHaveAGroup();
+
+            return view('groups.index', compact('groups', 'pendingInvitations', 'userHasGroup', 'user'));
         } catch (Exception $e) {
             echo $e->getMessage();
         }

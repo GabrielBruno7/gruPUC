@@ -145,5 +145,10 @@ class User
             ]);
         }
     }
+
+    public function isUserAlreadyHaveAGroup(): bool
+    {
+        return $this->getPersistence()->isUserAlreadyHaveAGroup($this);
+    }
 }
 

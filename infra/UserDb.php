@@ -3,6 +3,7 @@
 namespace infra;
 
 use domain\course\Course;
+use domain\group\Group;
 use domain\user\User;
 use domain\user\UserPersistenceInterface;
 use Illuminate\Support\Facades\DB;
@@ -77,5 +78,27 @@ class UserDb implements UserPersistenceInterface
             ->whereNull('deleted_at')
             ->exists()
         ;
+    }
+
+    public function isUserAlreadyHaveAGroup(User $user): bool
+    {
+        $result = DB::table('user_group')
+            ->where('user_id', $user->getId())
+            ->where('status', User::USER_STATUS_APPROVED)
+            ->first()
+        ;
+
+        if (!$result) {
+            return false;
+        }
+
+        $group = (new Group(new GroupDb()))
+            ->setId($result->group_id)
+            ->loadGroupById()
+        ;
+
+        $user->setGroup($group);
+
+        return true;
     }
 }

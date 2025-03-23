@@ -10,4 +10,5 @@ interface UserPersistenceInterface
     public function loadById(User $user): bool;
     public function loadByEmail(User $user): bool;
     public function isUserGroupFounder(User $user): bool;
+    public function isUserAlreadyHaveAGroup(User $user): bool;
 }

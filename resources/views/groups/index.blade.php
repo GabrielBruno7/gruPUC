@@ -33,9 +33,16 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1><i class="fas fa-users me-2"></i> Grupos</h1>
-        <a href="{{ route('groups.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus-circle me-2"></i> Criar Novo Grupo
-        </a>
+        
+        @if($userHasGroup)
+            <a href="{{ route('groups.show', $user->getGroup()->getId()) }}" class="btn btn-info">
+                <i class="fas fa-users me-2"></i> Meu Grupo
+            </a>
+        @else
+            <a href="{{ route('groups.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i> Criar Novo Grupo
+            </a>
+        @endif
     </div>
 
     @if(!$groups)
