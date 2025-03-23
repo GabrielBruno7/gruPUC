@@ -48,7 +48,7 @@
                     </button>
 
                     <button type="submit" class="btn btn-primary w-100 mb-3">
-                        <i class="fas fa-paper-plane me-2"></i> {{ __('Enviar') }}
+                        <i class="fas fa-paper-plane me-2"></i> {{ __('Criar grupo') }}
                     </button>
                 </form>
             </div>

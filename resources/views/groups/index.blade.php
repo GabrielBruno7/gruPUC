@@ -3,14 +3,16 @@
 @section('content')
 <div class="container">
     @if(session('error'))
-        <div class="alert alert-danger">
-            <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
+        <div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
     @if(session('success'))
-        <div class="alert alert-success">
-            <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
+        <div class="alert alert-success alert-dismissible fade show text-center" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
@@ -97,9 +99,9 @@
                                             <i class="fas fa-check"></i> Aceitar
                                         </button>
                                     </form>
-                                    <form action="{{ route('invitations.rejectt', $invitation->id) }}" method="POST" class="d-inline">
+                                    <form action="{{ route('invite.inviteReject', $invitation->id) }}" method="POST" class="d-inline">
                                         @csrf
-                                        @method('DELETE')
+                                        @method('POST')
                                         <button type="submit" class="btn btn-danger btn-sm">
                                             <i class="fas fa-times"></i> Recusar
                                         </button>

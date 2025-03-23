@@ -8,6 +8,8 @@ interface GroupPersistenceInterface
 {
     public function create(Group $group): Group;
     public function insertPendingTeammate(Group $group): Group;
+    public function insertTeammate(Group $group): Group;
+    public function isUserRequestedToJoinGroup(Group $group): bool;
     public function loadAllGroups(Group $group): array;
     public function loadGroupByUserId(Group $group): bool;
     public function loadGroupById(Group $group): bool;

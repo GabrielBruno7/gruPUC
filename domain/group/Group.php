@@ -20,6 +20,7 @@ class Group
 
     public const GROUP_STATUS_ACTIVE = 'ativo';
     public const GROUP_STATUS_PENDING = 'pending';
+    public const GROUP_STATUS_APPROVED = 'approved';
 
     public function __construct(GroupPersistenceInterface $persistence)
     {
@@ -148,11 +149,14 @@ class Group
         return $this->getPersistence()->create($this);
     }
 
-    public function insertPendingTeammate(): self
+    public function insertTeammate(): self
     {
+        $this->checkIfUserAlreadyInGroup();
+        $this->checkIfUserAlreadySendARequest();
+
         $this->setCreatedAt(now());
 
-        return $this->getPersistence()->insertPendingTeammate($this);
+        return $this->getPersistence()->insertTeammate($this);
     }
 
     public function approveRequest(): void
@@ -165,6 +169,13 @@ class Group
         $this->getPersistence()->rejectRequest($this);
     }
 
+    public function checkIfUserAlreadySendARequest(): void
+    {
+        if ($this->getPersistence()->isUserRequestedToJoinGroup($this)) {
+            throw new Exception("Você já possui um pedido para entrar nesse grupo, aguarde para que o administrador aceite ou recuse sua solicitação.");
+        }
+    }
+
     public function checkIfUserIsGroupOwnerToSendInvite(string $id): void
     {
         if ($this->getOwnerUser()->getId() !== $id) {
@@ -175,8 +186,7 @@ class Group
     public function checkIfUserAlreadyInGroup(): void
     {
         if ($this->getPersistence()->isUserAlreadyInGroup($this)) {
-            throw new Exception("Usuário já faz parte do grupo");
+            throw new Exception("Para entrar em outro grupo, saia do seu grupo atual.");
         }
     }
 }
-

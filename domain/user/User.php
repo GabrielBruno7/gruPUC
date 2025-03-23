@@ -23,6 +23,7 @@ class User
     public const USER_STATUS_APPROVED = 'approved';
     public const USER_STATUS_REJECTED = 'rejected';
     public const USER_STATUS_REPROVED = 'reproved';
+    public const USER_STATUS_PENDING = 'pending';
 
     public function __construct(?UserPersistenceInterface $persistence = null)
     {

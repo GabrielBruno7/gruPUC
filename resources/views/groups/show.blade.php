@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container d-flex justify-content-center">
-    <div class="card w-75"> <!-- Ajusta a largura do card -->
+    <div class="card w-75">
     @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
             {{ session('error') }}
@@ -90,10 +90,8 @@
                                 <span class="me-1">📩</span>
                                 {{ $invitation->email }} <span class="text-info">(Convite Enviado)</span>
                             </div>
-                            <form action="{{ route('groups.cancel.invite') }}" method="POST">
+                            <form action="{{ route('invite.inviteCancel', $invitation->id) }}" method="POST">
                                 @csrf
-                                <input type="hidden" name="id" value="{{ $invitation->id }}">
-                                <input type="hidden" name="group_id" value="{{ $invitation->group_id }}">
                                 <button type="submit" class="btn btn-danger mx-auto">✖ Cancelar convite</button>
                             </form>
                         </li>
@@ -104,7 +102,7 @@
             @if (Auth::id() !== $group->getOwnerUser()->getId() && !collect($group->getTeammates())->contains('id', Auth::id()))
                 <form action="{{ route('invite.requestJoin', $group->getId()) }}" method="POST" class="mt-4">
                     @csrf
-                    <button type="submit" class="btn btn-primary mx-auto">Pedir para Entrar</button>
+                    <button type="submit" class="btn btn-primary mx-auto">📬 Pedir para Entrar</button>
                 </form>
             @endif
             
@@ -123,7 +121,6 @@
                                 <input type="email" name="email" id="email" class="form-control" required placeholder="Digite o e-mail do usuário">
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                                 <button type="submit" class="btn btn-success">Enviar Convite</button>
                             </div>
                         </form>

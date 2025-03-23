@@ -3,19 +3,20 @@
 namespace App\Http\Controllers;
 
 use Exception;
+
 use infra\UserDb;
 use infra\GroupDb;
+use infra\InviteDb;
 use infra\CourseDb;
-use Ramsey\Uuid\Uuid;
 use domain\user\User;
 use domain\group\Group;
 use domain\course\Course;
-use App\Models\Invitation;
 use domain\invite\Invite;
+use App\Models\Invitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use infra\InviteDb;
+
 
 class GroupController extends Controller
 {
@@ -93,14 +94,15 @@ class GroupController extends Controller
                 ->loadGroupById()
             ;
 
-            $pendingInvitations = Invitation::where('group_id', $group->getId())
-                ->where('status', 'pending')
-                ->get()
+            $pendingInvitations = (new Invite(new InviteDb()))
+                ->setGroup($group)
+                ->setRecipient($user)
+                ->loadPendingInvitesByGroupId()
             ;
 
             return view('groups.show', compact('group', 'pendingInvitations'));
         } catch (Exception $e) {
-            echo $e->getMessage();
+            return redirect()->route('groups.index')->with('error', $e->getMessage());
         }
     }
 
@@ -208,9 +210,6 @@ class GroupController extends Controller
             $group = (new Group(new GroupDb()))
                 ->setId($groupId)
                 ->loadGroupById()
-            ;
-
-            $group
                 ->setUser($user)
                 ->rejectRequest()
             ;
@@ -223,6 +222,7 @@ class GroupController extends Controller
 
     public function rejectt($id)
     {
+        dd("f");
         $invitation = Invitation::findOrFail($id);
 
         if ($invitation->email !== Auth::user()->email) {
@@ -271,31 +271,7 @@ class GroupController extends Controller
 
             return redirect()->back()->with('success', 'Convite enviado com sucesso!');
         } catch (Exception $e) {
-            return redirect()->route('groups.index')->with('error', "Ocorreu um erro, entre em contato com o suporte.");
+            return redirect()->route('groups.index')->with('error', $e->getMessage());
         }
-    }
-
-    public function cancelInvite(Request $request)
-    {
-        $invitationId = $request['id'];
-
-        $user = Auth::user();
-
-        $isPendingInvite = Invitation::where('id', $invitationId)
-            ->where('status', 'pending')
-            ->where('invited_by', $user->id)
-            ->where('group_id', $request['group_id'])
-            ->exists()
-        ;
-
-        if (!$isPendingInvite) {
-            return redirect()->back()->with('error', 'Convite inexistente!');
-        }
-
-        Invitation::where('id', $invitationId)
-            ->update(['status' => 'cancelled'])
-        ;
-
-        return redirect()->back()->with('success', 'Convite cancelado com sucesso.');
     }
 }

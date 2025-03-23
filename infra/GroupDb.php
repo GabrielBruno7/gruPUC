@@ -126,7 +126,13 @@ class GroupDb implements GroupPersistenceInterface
             )
             ->leftJoin('users as u', 'ug.user_id', '=', 'u.id')
             ->where('ug.group_id', $group->getId())
-            ->where('ug.status', User::USER_STATUS_APPROVED)
+            ->whereIn(
+                'ug.status',
+                [
+                    User::USER_STATUS_APPROVED,
+                    User::USER_STATUS_PENDING
+                ]
+            )
             ->get()
             ->toArray()
         ;
@@ -136,9 +142,18 @@ class GroupDb implements GroupPersistenceInterface
     {
         return DB::table('user_group as ug')
             ->leftJoin('users as u', 'ug.user_id', '=', 'u.id')
-            ->where('ug.group_id', $group->getId())
             ->where('ug.user_id', $group->getUser()->getId())
             ->where('ug.status', User::USER_STATUS_APPROVED)
+            ->exists()
+        ;
+    }
+
+    public function isUserRequestedToJoinGroup(Group $group): bool
+    {
+        return DB::table('user_group')
+            ->where('group_id', $group->getId())
+            ->where('user_id', $group->getUser()->getId())
+            ->where('status', User::USER_STATUS_PENDING)
             ->exists()
         ;
     }
@@ -185,6 +200,25 @@ class GroupDb implements GroupPersistenceInterface
                 'created_at' => $group->getCreatedAt(),
                 'user_id' => $group->getUser()->getId(),
                 'status' => Group::GROUP_STATUS_PENDING,
+            ]);
+
+            if (!$affectedRow) {
+                throw new Exception('Houve um erro na criação do vinculo do grupo com o usuário');
+            }
+        });
+
+        return $group;
+    }
+
+    public function insertTeammate(Group $group): Group
+    {
+        DB::transaction(function () use ($group) {
+            $affectedRow = DB::table('user_group')->insert([
+                'group_id' => $group->getId(),
+                'id' => Helper::uuid(),
+                'created_at' => $group->getCreatedAt(),
+                'user_id' => $group->getUser()->getId(),
+                'status' => Group::GROUP_STATUS_APPROVED,
             ]);
 
             if (!$affectedRow) {

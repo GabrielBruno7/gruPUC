@@ -11,21 +11,19 @@ class UsersSeeder extends Seeder
 {
     public function run(): void
     {
-        // Obtém um curso existente para associar o usuário (caso haja cursos já semeados)
         $courses = DB::table('courses')->pluck('id')->toArray();
         $courseId = count($courses) ? $courses[array_rand($courses)] : Str::uuid();
 
-        // Insere usuários de exemplo
         DB::table('users')->insert([
             [
                 'id'             => Str::uuid(),
-                'name'           => 'John Doe',
-                'email'          => 'john.doe@example.com',
+                'name'           => 'Lucas Lima',
+                'email'          => 'gabriel@gmail.com',
                 'password'       => Hash::make('password'),
                 'role'           => 'student',
                 'group_id'       => null,
                 'remember_token' => Str::random(10),
-                'period'         => 1,
+                'period'         => 5,
                 'course_id'      => $courseId,
                 'created_at'     => now(),
                 'updated_at'     => now(),
@@ -38,7 +36,7 @@ class UsersSeeder extends Seeder
                 'role'           => 'student',
                 'group_id'       => null,
                 'remember_token' => Str::random(10),
-                'period'         => 2,
+                'period'         => 5,
                 'course_id'      => $courseId,
                 'created_at'     => now(),
                 'updated_at'     => now(),

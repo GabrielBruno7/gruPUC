@@ -19,8 +19,9 @@ class Invite
     private ?InvitePersistenceInterface $persistence;
 
     public const INVITE_STATUS_PENDING = 'pending';
-    public const INVITE_STATUS_APPROVED = 'approved';
     public const INVITE_STATUS_CANCELLED = 'cancelled';
+    public const INVITE_STATUS_REJECTED = 'rejected';
+    public const INVITE_STATUS_ACCEPTED = 'accepted';
 
     public function __construct(?InvitePersistenceInterface $persistence = null)
     {
@@ -134,9 +135,58 @@ class Invite
         }
     }
 
+    public function loadInviteById(): self
+    {
+        if (!$this->getPersistence()->loadInviteById($this)) {
+            throw new Exception("Convite não encontrado.");
+        }
+
+        return $this;
+    }
+
+    public function checkIfAuthUserIsRealReceiver(string $email): self
+    {
+        if ($this->getRecipient()->getEmail() !== $email) {
+            throw new Exception("O Convite só pode ser aceito por quem o recebeu.");
+        }
+
+        return $this;
+    }
+
     public function loadPendingInvitesByRecipientEmail()
     {
         return $this->getPersistence()->loadPendingInvitesByRecipientEmail($this);
+    }
+
+    public function loadPendingInvitesByGroupId()
+    {
+        return $this->getPersistence()->loadPendingInvitesByGroupId($this);
+    }
+
+    public function cancelInvite(): void
+    {
+        $this->setStatus(self::INVITE_STATUS_CANCELLED);
+        $this->getPersistence()->updateInviteStatus($this);
+    }
+
+    public function rejectInvite(): void
+    {
+        $this->setStatus(self::INVITE_STATUS_REJECTED);
+        $this->getPersistence()->updateInviteStatus($this);
+    }
+
+    public function acceptInvite(): self
+    {
+        $this->getPersistence()->acceptInvite($this);
+
+        return $this;
+    }
+
+    public function rejectAllPendingsInvites(): self
+    {
+        $this->getPersistence()->rejectAllPendingsInvites($this);
+
+        return $this;
     }
 
     public function invite(): void
@@ -145,8 +195,8 @@ class Invite
             ->setCreatedAt(now())
             ->setId(Helper::uuid())
             ->setStatus(self::INVITE_STATUS_PENDING)
-            ->setSender($this->getGroup()->getOwnerUser())
             ->setRecipient($this->getGroup()->getUser())
+            ->setSender($this->getGroup()->getOwnerUser())
         ;
 
         $this->getPersistence()->inviteTeammate($this);
