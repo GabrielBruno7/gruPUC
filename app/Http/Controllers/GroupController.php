@@ -12,7 +12,6 @@ use domain\user\User;
 use domain\group\Group;
 use domain\course\Course;
 use domain\invite\Invite;
-use App\Models\Invitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -108,37 +107,21 @@ class GroupController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function deleteGroup(string $id)
     {
-        $group = Group::findOrFail($id);
+        try {
+            $group = (new Group(new GroupDb()))->setId($id)->loadGroupById();
+            $user = (new User(new UserDb()))->setId(Auth::id())->loadById();
 
-        $hasActiveMembers = DB::table('user_group')
-            ->join('groups', 'user_group.group_id', '=', 'groups.id')
-            ->where('groups.status', 'ativo')
-            ->where('groups.id', $group->id)
-            ->whereIn('user_group.status', ['pending', 'approved'])
-            ->where('user_group.user_id', '!=', $group->owner_id)
-            ->whereNull('groups.deleted_at')
-            ->exists()
-        ;
-
-        if ($hasActiveMembers) {
-            return redirect()->route('groups.show', $id)->with('error', 'Este grupo ainda possui membros ativos e não pode ser desativado.');
-        }
-
-        if (Auth::id() === $group->owner_id) {
-            if ($group->status === 'inativo') {
-                return redirect()->route('groups.index')->with('error', 'Este grupo já está desativado.');
-            }
-
-            $group->status = 'inativo';
-            $group->deleted_at = now();
-            $group->save();
+            $group
+                ->setUser($user)
+                ->deleteGroup()
+            ;
 
             return redirect()->route('groups.index')->with('success', 'Grupo desativado com sucesso!');
+        } catch (Exception $e) {
+            return redirect()->route('groups.show', $group->getId())->with('error', $e->getMessage());
         }
-
-        return redirect()->route('groups.index')->with('error', 'Você não tem permissão para desativar este grupo.');
     }
 
     public function store(Request $request)
@@ -171,7 +154,10 @@ class GroupController extends Controller
                 ->inviteTeammates()
             ;
 
-            return redirect()->route('groups.show', $group->getId())->with('success', 'Novo grupo criado com sucesso!');
+            return redirect()->route('groups.show', $group->getId())->with(
+                'success',
+                'Novo grupo criado com sucesso!'
+            );
         } catch (Exception $e) {
             return redirect()->route('groups.index')->with('error', $e->getMessage());
         }
@@ -195,9 +181,15 @@ class GroupController extends Controller
                 ->approveRequest()
             ;
 
-            return redirect()->route('groups.show', $groupId)->with('success', 'Membro aprovado com sucesso!');
+            return redirect()->route('groups.show', $groupId)->with(
+                'success',
+                'Membro aprovado com sucesso!'
+            );
         } catch (Exception $e) {
-            return redirect()->route('groups.index')->with('error', "Ocorreu um erro, entre em contato com o suporte.");
+            return redirect()->route('groups.index')->with(
+                'error',
+                'Ocorreu um erro, entre em contato com o suporte.'
+            );
         }
     }
 
@@ -216,25 +208,13 @@ class GroupController extends Controller
                 ->rejectRequest()
             ;
 
-            return redirect()->route('groups.show', $groupId)->with('success', 'Membro rejeitado com sucesso!');
+            return redirect()->route('groups.show', $groupId)->with(
+                'success',
+                'Membro rejeitado com sucesso!'
+            );
         } catch (Exception $e) {
             return redirect()->route('groups.index')->with('error', $e->getMessage());
         }
-    }
-
-    public function rejectt($id)
-    {
-        dd("f");
-        $invitation = Invitation::findOrFail($id);
-
-        if ($invitation->email !== Auth::user()->email) {
-            return redirect()->route('groups.index')->with('error', 'Convite inválido.');
-        }
-
-        $invitation->status = 'rejected';
-        $invitation->save();
-
-        return redirect()->route('groups.index')->with('success', 'Convite recusado com sucesso!');
     }
 
     public function inviteTeammate(Request $request, string $groupId)

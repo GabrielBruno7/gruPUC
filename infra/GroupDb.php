@@ -82,6 +82,7 @@ class GroupDb implements GroupPersistenceInterface
                 'g.name',
                 'g.period',
                 'g.owner_id',
+                'g.status',
                 'g.created_at'
             )
             ->leftJoin('groups as g', 'ug.group_id', '=', 'g.id')
@@ -104,6 +105,7 @@ class GroupDb implements GroupPersistenceInterface
             ->setId($result->id)
             ->setName($result->name)
             ->setPeriod($result->period)
+            ->setStatus($result->status)
             ->setOwnerUser($ownerUser)
             ->setCreatedAt((new \DateTime($result->created_at)))
         ;
@@ -144,6 +146,19 @@ class GroupDb implements GroupPersistenceInterface
             ->leftJoin('users as u', 'ug.user_id', '=', 'u.id')
             ->where('ug.user_id', $group->getUser()->getId())
             ->where('ug.status', User::USER_STATUS_APPROVED)
+            ->exists()
+        ;
+    }
+
+    public function hasActiveTeammatesOnGroup(Group $group): bool
+    {
+        return DB::table('user_group')
+            ->join('groups', 'user_group.group_id', '=', 'groups.id')
+            ->where('groups.status', 'ativo')
+            ->where('groups.id', $group->getId())
+            ->whereIn('user_group.status', ['pending', 'approved'])
+            ->where('user_group.user_id', '!=', $group->getOwnerUser()->getId())
+            ->whereNull('groups.deleted_at')
             ->exists()
         ;
     }
@@ -240,6 +255,18 @@ class GroupDb implements GroupPersistenceInterface
 
         if (!$affectedRow) {
             throw new Exception('Houve um erro na aprovação do usuário');
+        }
+    }
+
+    public function deleteGroup(Group $group): void
+    {
+        $affectedRow = DB::table('groups')
+            ->where('id', $group->getId())
+            ->update(['status' => $group->getStatus()])
+        ;
+
+        if (!$affectedRow) {
+            throw new Exception('Houve um erro ao deletar grupo');
         }
     }
 

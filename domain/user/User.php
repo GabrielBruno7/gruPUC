@@ -4,10 +4,13 @@ namespace domain\user;
 
 use domain\course\Course;
 use domain\group\Group;
+use domain\helper\Helper;
 use Exception;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class User
+class User extends Authenticatable
 {
     private string $id;
     private int $period;
@@ -16,6 +19,7 @@ class User
     private Group $group;
     private string $email;
     private Course $course;
+    private string $password;
     private ?UserPersistenceInterface $persistence = null;
 
     public const USER_STATUS_ACTIVE = 'ativo';
@@ -95,6 +99,20 @@ class User
         return $this->group;
     }
 
+    public function setPassword(string $password): self
+    {
+        $password = Hash::make($password);
+
+        $this->password = $password;
+
+        return $this;
+    }
+
+    public function getPassword(): string
+    {
+        return $this->password;
+    }
+
     public function setEmail(string $email): self
     {
         $this->email = $email;
@@ -149,6 +167,15 @@ class User
     public function isUserAlreadyHaveAGroup(): bool
     {
         return $this->getPersistence()->isUserAlreadyHaveAGroup($this);
+    }
+
+    public function create(): self
+    {
+        $this->setId(Helper::uuid());
+
+        $this->getPersistence()->create($this);
+
+        return $this;
     }
 }
 

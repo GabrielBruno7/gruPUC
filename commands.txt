@@ -1,0 +1,7 @@
+Create new Migration = php artisan make:migration nome_da_migration
+Migrate = php artisan migrate
+Migrate Refresh = php artisan migrate:refresh
+
+Migrate + seed = php artisan migrate --seed
+Specific database seeder = php artisan db:seed --class=CourseSeeder
+Create seeder = php artisan make:seeder SeederName

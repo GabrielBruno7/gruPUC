@@ -6,6 +6,7 @@ use domain\course\Course;
 use domain\group\Group;
 use domain\user\User;
 use domain\user\UserPersistenceInterface;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class UserDb implements UserPersistenceInterface
@@ -78,6 +79,23 @@ class UserDb implements UserPersistenceInterface
             ->whereNull('deleted_at')
             ->exists()
         ;
+    }
+
+    public function create(User $user): void
+    {
+        $affectedRow = DB::table('users')->insert([
+            'id'         => $user->getId(),
+            'email'      => $user->getEmail(),
+            'name'       => $user->getName(),
+            'password'   => $user->getPassword(),
+            'period'     => $user->getPeriod(),
+            'course_id'  => $user->getCourse()->getId(),
+            'created_at' => now(),
+        ]);
+
+        if ($affectedRow === 0) {
+            throw new Exception('Houve um erro ao cadastrar o usuário');
+        }
     }
 
     public function isUserAlreadyHaveAGroup(User $user): bool

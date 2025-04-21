@@ -7,6 +7,7 @@ use domain\group\Group;
 interface GroupPersistenceInterface
 {
     public function create(Group $group): Group;
+    public function deleteGroup(Group $group): void;
     public function insertPendingTeammate(Group $group): Group;
     public function insertTeammate(Group $group): Group;
     public function isUserRequestedToJoinGroup(Group $group): bool;
@@ -16,4 +17,5 @@ interface GroupPersistenceInterface
     public function approveRequest(Group $group): void;
     public function rejectRequest(Group $group): void;
     public function isUserAlreadyInGroup(Group $group): bool;
+    public function hasActiveTeammatesOnGroup(Group $group): bool;
 }

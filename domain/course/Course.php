@@ -75,6 +75,10 @@ class Course
         }
     
         return $this;
+    }
+
+    public function findAllCourses(): array
+    {
+        return $this->getPersistence()->findAllCourses();
     }    
 }
-

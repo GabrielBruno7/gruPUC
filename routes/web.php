@@ -15,7 +15,7 @@ Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
 Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.create');
 Route::get('/groups/{id}', [GroupController::class, 'show'])->name('groups.show');
 Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
-Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
+Route::delete('/groups/{group}', [GroupController::class, 'deleteGroup'])->name('groups.deleteGroup');
 
 Route::get('/users', [UserController::class, 'index'])->name('users.index');
 Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');

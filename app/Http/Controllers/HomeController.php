@@ -20,7 +20,7 @@ class HomeController extends Controller
         $course = Course::where('id', $user['course_id'])->first();
 
         return view(
-            'groups.create', //sera que teria que trazer a lista e nao o cadastro? 
+            'groups.create',
             compact(
                 'user',
                 'course'

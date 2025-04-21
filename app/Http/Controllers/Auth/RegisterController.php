@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
-use App\Models\User;
-use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Controllers\Controller;
+use domain\course\Course;
+use domain\user\User;
 use Illuminate\Support\Facades\Validator;
-use App\Models\Course;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Foundation\Auth\RegistersUsers;
+use infra\CourseDb;
+use infra\UserDb;
 
 class RegisterController extends Controller
 {
@@ -34,18 +35,24 @@ class RegisterController extends Controller
 
     protected function create(array $data)
     {
-        return User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-            'course_id' => $data['course_id'],
-            'period' => $data['period'],
-        ]);
+        $course = (new Course(new CourseDb()))
+            ->setId($data['course_id'])
+            ->loadById()
+        ;
+
+        return (new User(new UserDb()))
+            ->setCourse($course)
+            ->setName($data['name'])
+            ->setEmail($data['email'])
+            ->setPeriod($data['period'])
+            ->setPassword($data['password'])
+            ->create()
+        ;
     }
 
     public function showRegistrationForm()
     {
-        $courses = Course::all();
+        $courses = (new Course(new CourseDb()))->findAllCourses();
 
         return view('auth.register', compact('courses'));
     }

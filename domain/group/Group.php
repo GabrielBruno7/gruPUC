@@ -13,13 +13,17 @@ class Group
     private string $id;
     private int $period;
     private string $name;
+    private string $status;
     private User $ownerUser;
     private ?array $teammates;
     private \DateTime $createdAt;
+    private \DateTime $deletedAt;
     private ?GroupPersistenceInterface $persistence = null;
 
     public const GROUP_STATUS_ACTIVE = 'ativo';
-    public const GROUP_STATUS_PENDING = 'pending';
+    public const GROUP_STATUS_INATIVE = 'inativo';
+
+    public const GROUP_STATUS_PENDING = 'pending'; //TODO: Verificar status dos grupos
     public const GROUP_STATUS_APPROVED = 'approved';
 
     public function __construct(GroupPersistenceInterface $persistence)
@@ -42,6 +46,19 @@ class Group
     public function getId(): string
     {
         return $this->id;
+    }
+
+    public function setStatus(string $status): self
+    {
+        //fazer validação dos status
+        $this->status = $status;
+
+        return $this;
+    }
+
+    public function getStatus(): string
+    {
+        return $this->status;
     }
 
     public function setPeriod(int $period): self
@@ -102,6 +119,18 @@ class Group
     public function getCreatedAt(): \DateTime
     {
         return $this->createdAt;
+    }
+
+    public function setDeletedAt(\DateTime $deletedAt): self
+    {
+        $this->deletedAt = $deletedAt;
+
+        return $this;
+    }
+
+    public function getDeletedAt(): \DateTime
+    {
+        return $this->deletedAt;
     }
 
     public function setTeammates(?array $teammates): self
@@ -187,6 +216,41 @@ class Group
     {
         if ($this->getPersistence()->isUserAlreadyInGroup($this)) {
             throw new Exception("Para entrar em outro grupo, saia do seu grupo atual.");
+        }
+    }
+
+    public function deleteGroup(): void
+    {
+        // $this->checkIfGroupIsNotActive();
+        // $this->checkIfUserIsOwnerGroup();
+        // $this->checkIfHasActiveTeammatesBeforeDeleteGroup();
+
+        $this->setStatus(Group::GROUP_STATUS_INATIVE);
+        $this->setDeletedAt(now());
+
+        $this->getPersistence()->deleteGroup($this);
+    }
+
+    private function checkIfHasActiveTeammatesBeforeDeleteGroup(): void
+    {
+        if ($this->getPersistence()->hasActiveTeammatesOnGroup($this)) {
+            throw new Exception('Este grupo ainda possui membros ativos e não pode ser desativado.');
+        }
+    }
+
+    private function checkIfGroupIsNotActive(): void
+    {
+        if ($this->getStatus() !== Group::GROUP_STATUS_ACTIVE) {
+            throw new Exception('O grupo não está apto para ser excluido');
+        }
+    }
+
+    private function checkIfUserIsOwnerGroup(): void
+    {
+        $isOwner = $this->getUser()->getId() === $this->getOwnerUser()->getId();
+
+        if (!$isOwner) {
+            throw new Exception('Para excluir um grupo, é necessario ser o criador do grupo.');
         }
     }
 }

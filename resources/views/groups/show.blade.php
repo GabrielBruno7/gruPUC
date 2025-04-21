@@ -135,7 +135,7 @@
                     ➕ Convidar Usuário
                 </button>
 
-                <form action="{{ route('groups.destroy', $group->getId()) }}" method="POST">
+                <form action="{{ route('groups.deleteGroup', $group->getId()) }}" method="POST">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-danger">✖ Deletar Grupo</button>

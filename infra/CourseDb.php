@@ -29,4 +29,12 @@ class CourseDb implements CoursePersistenceInterface
 
         return true;
     }
+
+    public function findAllCourses(): array
+    {
+        return DB::table('courses')
+            ->get()
+            ->toArray()
+        ;
+    }
 }
